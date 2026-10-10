@@ -1,0 +1,20 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: monthly
+    reviewers:
+      - 'femiwiki/reviewer'
+    cooldown:
+      default-days: 7
+    groups:
+      gomod:
+        applies-to: version-updates
+        patterns:
+          - '*'
+      gomod-security:
+        applies-to: security-updates
+        patterns:
+          - '*'
