@@ -10,7 +10,11 @@ updates:
     cooldown:
       default-days: 7
     groups:
-      opentelemetry:
+      gomod:
+        applies-to: version-updates
+        patterns:
+          - '*'
+      gomod-security:
         applies-to: security-updates
         patterns:
-          - 'go.opentelemetry.io/*'
+          - '*'
