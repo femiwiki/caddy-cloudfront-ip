@@ -38,7 +38,7 @@ func fakeAWS(t *testing.T, fail *atomic.Bool, body string) *httptest.Server {
 	return srv
 }
 
-func provision(t *testing.T, s *CloudFrontIPRange) error {
+func provision(t *testing.T, s *IPRange) error {
 	t.Helper()
 	ctx, cancel := caddy.NewContext(caddy.Context{Context: context.Background()})
 	t.Cleanup(cancel)
@@ -53,7 +53,7 @@ func prefixes(exprs ...string) []netip.Prefix {
 	return out
 }
 
-func assertRanges(t *testing.T, s *CloudFrontIPRange, want []netip.Prefix) {
+func assertRanges(t *testing.T, s *IPRange, want []netip.Prefix) {
 	t.Helper()
 	got := s.GetIPRanges(nil)
 	if len(got) != len(want) {
@@ -68,7 +68,7 @@ func assertRanges(t *testing.T, s *CloudFrontIPRange, want []netip.Prefix) {
 
 func TestProvisionKeepsOnlyOriginFacing(t *testing.T) {
 	var fail atomic.Bool
-	s := &CloudFrontIPRange{url: fakeAWS(t, &fail, sample).URL}
+	s := &IPRange{url: fakeAWS(t, &fail, sample).URL}
 	if err := provision(t, s); err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func TestProvisionKeepsOnlyOriginFacing(t *testing.T) {
 
 func TestFailedRefreshKeepsLastRanges(t *testing.T) {
 	var fail atomic.Bool
-	s := &CloudFrontIPRange{url: fakeAWS(t, &fail, sample).URL}
+	s := &IPRange{url: fakeAWS(t, &fail, sample).URL}
 	if err := provision(t, s); err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestFailedRefreshKeepsLastRanges(t *testing.T) {
 func TestFirstFetchFailureUsesFallback(t *testing.T) {
 	var fail atomic.Bool
 	fail.Store(true)
-	s := &CloudFrontIPRange{
+	s := &IPRange{
 		url:      fakeAWS(t, &fail, sample).URL,
 		Fallback: []string{"3.29.57.0/26", "13.124.199.1"},
 	}
@@ -110,7 +110,7 @@ func TestFirstFetchFailureUsesFallback(t *testing.T) {
 func TestFirstFetchFailureWithoutFallbackFails(t *testing.T) {
 	var fail atomic.Bool
 	fail.Store(true)
-	s := &CloudFrontIPRange{url: fakeAWS(t, &fail, sample).URL}
+	s := &IPRange{url: fakeAWS(t, &fail, sample).URL}
 	if err := provision(t, s); err == nil {
 		t.Fatal("provision succeeded without ranges")
 	}
@@ -118,7 +118,7 @@ func TestFirstFetchFailureWithoutFallbackFails(t *testing.T) {
 
 func TestEmptyListIsAnError(t *testing.T) {
 	var fail atomic.Bool
-	s := &CloudFrontIPRange{url: fakeAWS(t, &fail, `{"prefixes": [], "ipv6_prefixes": []}`).URL}
+	s := &IPRange{url: fakeAWS(t, &fail, `{"prefixes": [], "ipv6_prefixes": []}`).URL}
 	if err := provision(t, s); err == nil {
 		t.Fatal("provision succeeded with an empty list")
 	}
@@ -127,7 +127,7 @@ func TestEmptyListIsAnError(t *testing.T) {
 func TestBadFallbackFails(t *testing.T) {
 	var fail atomic.Bool
 	fail.Store(true)
-	s := &CloudFrontIPRange{
+	s := &IPRange{
 		url:      fakeAWS(t, &fail, sample).URL,
 		Fallback: []string{"not-an-ip"},
 	}
@@ -140,10 +140,10 @@ func TestUnmarshalCaddyfile(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
-		want    *CloudFrontIPRange
+		want    *IPRange
 		wantErr bool
 	}{
-		{name: "bare", input: `cloudfront`, want: &CloudFrontIPRange{}},
+		{name: "bare", input: `cloudfront`, want: &IPRange{}},
 		{
 			name: "everything",
 			input: `cloudfront {
@@ -152,7 +152,7 @@ func TestUnmarshalCaddyfile(t *testing.T) {
 				fallback 3.29.57.0/26 3.172.0.0/18
 				fallback 15.158.0.0/16
 			}`,
-			want: &CloudFrontIPRange{
+			want: &IPRange{
 				Interval: caddy.Duration(3600e9),
 				Timeout:  caddy.Duration(5e9),
 				Fallback: []string{"3.29.57.0/26", "3.172.0.0/18", "15.158.0.0/16"},
@@ -166,7 +166,7 @@ func TestUnmarshalCaddyfile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := &CloudFrontIPRange{}
+			got := &IPRange{}
 			err := got.UnmarshalCaddyfile(caddyfile.NewTestDispenser(tt.input))
 			if tt.wantErr {
 				if err == nil {

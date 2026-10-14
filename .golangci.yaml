@@ -4,12 +4,68 @@ version: "2"
 linters:
   default: standard
   enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - copyloopvar
     - cyclop
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - exptostd
+    - fatcontext
+    - forcetypeassert
     - funlen
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - gocognit
     - gocritic
+    - gomoddirectives
+    - goprintffuncname
+    - gosec
+    - iface
+    - inamedparam
+    - interfacebloat
+    - intrange
+    - maintidx
+    - makezero
+    - mirror
     - misspell
+    - modernize
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnesserr
+    - nilnil
+    - noctx
     - nolintlint
+    - nosprintfhostport
+    - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - recvcheck
+    - revive
+    - testableexamples
+    - thelper
+    - tparallel
     - unconvert
+    - unparam
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
   settings:
     govet:
       enable:

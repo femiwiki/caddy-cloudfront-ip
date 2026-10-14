@@ -26,13 +26,13 @@ const (
 )
 
 func init() {
-	caddy.RegisterModule(new(CloudFrontIPRange))
+	caddy.RegisterModule(new(IPRange))
 }
 
-// CloudFrontIPRange gives the CLOUDFRONT_ORIGIN_FACING ranges from
+// IPRange gives the CLOUDFRONT_ORIGIN_FACING ranges from
 // ip-ranges.amazonaws.com, fetched at provision and every Interval.
 // A failed refresh keeps the last list.
-type CloudFrontIPRange struct {
+type IPRange struct {
 	// How often to fetch the list. Default: 12h.
 	Interval caddy.Duration `json:"interval,omitempty"`
 	// How long one fetch may take. Default: 30s.
@@ -48,15 +48,15 @@ type CloudFrontIPRange struct {
 }
 
 // CaddyModule returns the Caddy module information.
-func (*CloudFrontIPRange) CaddyModule() caddy.ModuleInfo {
+func (*IPRange) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
 		ID:  "http.ip_sources.cloudfront",
-		New: func() caddy.Module { return new(CloudFrontIPRange) },
+		New: func() caddy.Module { return new(IPRange) },
 	}
 }
 
 // Provision fetches the list and starts refreshing it.
-func (s *CloudFrontIPRange) Provision(ctx caddy.Context) error {
+func (s *IPRange) Provision(ctx caddy.Context) error {
 	s.logger = ctx.Logger()
 	if s.url == "" {
 		s.url = rangesURL
@@ -87,7 +87,7 @@ func (s *CloudFrontIPRange) Provision(ctx caddy.Context) error {
 	return nil
 }
 
-func (s *CloudFrontIPRange) refreshLoop(ctx context.Context) {
+func (s *IPRange) refreshLoop(ctx context.Context) {
 	ticker := time.NewTicker(time.Duration(s.Interval))
 	defer ticker.Stop()
 	for {
@@ -102,7 +102,7 @@ func (s *CloudFrontIPRange) refreshLoop(ctx context.Context) {
 	}
 }
 
-func (s *CloudFrontIPRange) refresh(ctx context.Context) error {
+func (s *IPRange) refresh(ctx context.Context) error {
 	ranges, err := s.fetch(ctx)
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ type ipRanges struct {
 	} `json:"ipv6_prefixes"`
 }
 
-func (s *CloudFrontIPRange) fetch(ctx context.Context) ([]netip.Prefix, error) {
+func (s *IPRange) fetch(ctx context.Context) ([]netip.Prefix, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.url, nil)
 	if err != nil {
 		return nil, err
@@ -171,12 +171,12 @@ func parsePrefixes(exprs []string) ([]netip.Prefix, error) {
 	return prefixes, nil
 }
 
-func (s *CloudFrontIPRange) setRanges(ranges []netip.Prefix) {
+func (s *IPRange) setRanges(ranges []netip.Prefix) {
 	s.ranges.Store(&ranges)
 }
 
 // GetIPRanges returns the current ranges.
-func (s *CloudFrontIPRange) GetIPRanges(_ *http.Request) []netip.Prefix {
+func (s *IPRange) GetIPRanges(_ *http.Request) []netip.Prefix {
 	return *s.ranges.Load()
 }
 
@@ -187,7 +187,7 @@ func (s *CloudFrontIPRange) GetIPRanges(_ *http.Request) []netip.Prefix {
 //		timeout <duration>
 //		fallback <ranges...>
 //	}
-func (s *CloudFrontIPRange) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+func (s *IPRange) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	d.Next()
 	if d.NextArg() {
 		return d.ArgErr()
@@ -231,7 +231,7 @@ func unmarshalDuration(d *caddyfile.Dispenser, dst *caddy.Duration) error {
 }
 
 var (
-	_ caddy.Provisioner       = (*CloudFrontIPRange)(nil)
-	_ caddyfile.Unmarshaler   = (*CloudFrontIPRange)(nil)
-	_ caddyhttp.IPRangeSource = (*CloudFrontIPRange)(nil)
+	_ caddy.Provisioner       = (*IPRange)(nil)
+	_ caddyfile.Unmarshaler   = (*IPRange)(nil)
+	_ caddyhttp.IPRangeSource = (*IPRange)(nil)
 )
